@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "teamtailor"
 version = "0.1.0"
 authors = ["André Ligné <andre@teamtailor.com>"]
 edition = "2018"
