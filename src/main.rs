@@ -3,7 +3,6 @@ extern crate clap;
 use clap::App;
 
 mod configuration;
-mod error;
 mod subcommand;
 
 fn main() {
@@ -15,28 +14,45 @@ fn main() {
         .subcommand(init)
         .get_matches();
 
-    let _exit_code: Option<error::Error> = match matches.subcommand() {
-        ("init", Some(_init_matches)) => match subcommand::init::call() {
-            Some(subcommand::init::Error::ConfigurationAlreadyExists) => {
-                eprintln!(
-                    "fatal: configuration file already exists: {}",
-                    configuration::path().to_str().unwrap()
+    match matches.subcommand() {
+        ("init", _) => match subcommand::init::call() {
+            Ok(configuration) => {
+                println!(
+                    "success: created configuration file ({})",
+                    configuration.filepath()
                 );
-                std::process::exit(1);
             }
-            Some(subcommand::init::Error::CouldNotCreateFile) => {
-                eprintln!("fatal: could not create the configuration file");
-                std::process::exit(1);
-            }
-            Some(subcommand::init::Error::CouldNotCreateConfigurationDirectory) => {
-                eprintln!("fatal: could not create the configuration directory");
-                std::process::exit(1);
-            }
-            None => {
-                println!("success: created configuration file");
-                None
-            }
+            Err(subcommand::init::Error::ConfigurationError(error)) => match error {
+                configuration::Error::ConfigurationAlreadyExists => {
+                    eprintln!(
+                        "fatal: configuration file already exists: {}",
+                        configuration::path().to_str().unwrap()
+                    );
+                    std::process::exit(1);
+                }
+                configuration::Error::CouldNotSerializeConfiguration(serde_error) => {
+                    eprintln!(
+                        "fatal: could not create the configuration file ({})",
+                        serde_error
+                    );
+                    std::process::exit(1);
+                }
+                configuration::Error::CouldNotCreateFile(io_error) => {
+                    eprintln!(
+                        "fatal: could not create the configuration file ({})",
+                        io_error
+                    );
+                    std::process::exit(1);
+                }
+                configuration::Error::CouldNotCreateConfigurationDirectory(io_error) => {
+                    eprintln!(
+                        "fatal: could not create the configuration directory ({})",
+                        io_error
+                    );
+                    std::process::exit(1);
+                }
+            },
         },
-        _ => None,
-    };
+        _ => std::process::exit(1),
+    }
 }
