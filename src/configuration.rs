@@ -18,7 +18,7 @@ pub fn default() -> Configuration {
     };
 }
 
-pub enum Error {
+pub enum CreateError {
     CouldNotCreateConfigurationDirectory(std::io::Error),
     ConfigurationAlreadyExists,
     CouldNotCreateFile(std::io::Error),
@@ -35,19 +35,19 @@ impl Configuration {
         String::from(path().to_str().unwrap())
     }
 
-    pub fn create_default_configration() -> Result<Configuration, Error> {
+    pub fn create_default_configration() -> Result<Configuration, CreateError> {
         let configuration_directory = directory();
         let configuration_path = path();
 
         if !configuration_directory.exists() {
             let builder = std::fs::DirBuilder::new();
             if let Err(e) = builder.create(&configuration_directory) {
-                return Err(Error::CouldNotCreateConfigurationDirectory(e));
+                return Err(CreateError::CouldNotCreateConfigurationDirectory(e));
             }
         }
 
         if configuration_path.exists() {
-            return Err(Error::ConfigurationAlreadyExists);
+            return Err(CreateError::ConfigurationAlreadyExists);
         }
 
         let default_configuration = default();
@@ -56,11 +56,11 @@ impl Configuration {
             Ok(mut file) => match serde_yaml::to_string(&default_configuration) {
                 Ok(yml) => match file.write_all(yml.as_bytes()) {
                     Ok(_) => Ok(default_configuration),
-                    Err(e) => Err(Error::CouldNotCreateFile(e)),
+                    Err(e) => Err(CreateError::CouldNotCreateFile(e)),
                 },
-                Err(e) => Err(Error::CouldNotSerializeConfiguration(e)),
+                Err(e) => Err(CreateError::CouldNotSerializeConfiguration(e)),
             },
-            Err(e) => Err(Error::CouldNotCreateFile(e)),
+            Err(e) => Err(CreateError::CouldNotCreateFile(e)),
         }
     }
 }

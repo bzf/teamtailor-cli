@@ -3,7 +3,7 @@ extern crate dirs;
 use super::configuration;
 
 pub enum Error {
-    ConfigurationError(configuration::Error),
+    CreateConfigurationError(configuration::CreateError),
 }
 
 pub fn call() -> Result<configuration::Configuration, Error> {
@@ -11,6 +11,6 @@ pub fn call() -> Result<configuration::Configuration, Error> {
 
     match result {
         Ok(configuration) => Ok(configuration),
-        Err(error) => Err(Error::ConfigurationError(error)),
+        Err(error) => Err(Error::CreateConfigurationError(error)),
     }
 }
