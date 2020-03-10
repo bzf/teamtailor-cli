@@ -42,6 +42,10 @@ impl Configuration {
         String::from(path().to_str().unwrap())
     }
 
+    pub fn projects_directory(&self) -> std::path::PathBuf {
+        std::path::Path::new(&self.root_directory).to_path_buf()
+    }
+
     pub fn create_default_configration() -> Result<Configuration, CreateError> {
         let configuration_directory = directory();
         let configuration_path = path();
