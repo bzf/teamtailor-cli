@@ -1,8 +1,12 @@
-pub fn path() -> String {
-    return format!(
-        "{}/teamtailor/config.yml",
-        std::string::String::from(dirs::config_dir().unwrap().to_str().unwrap())
-    );
+use serde::{Serialize, Deserialize};
+
+pub fn directory() -> std::path::PathBuf {
+    let name = std::path::Path::new("teamtailor/");
+    dirs::config_dir().unwrap().join(name)
+}
+
+pub fn path() -> std::path::PathBuf {
+    directory().join("config.yml")
 }
 
 pub fn default() -> Configuration {
@@ -13,6 +17,7 @@ pub fn default() -> Configuration {
     };
 }
 
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Configuration {
     root_directory: String,
 }

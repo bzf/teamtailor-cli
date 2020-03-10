@@ -20,20 +20,27 @@ fn main() {
             Some(subcommand::init::Error::ConfigurationAlreadyExists) => {
                 eprintln!(
                     "fatal: configuration file already exists: {}",
-                    configuration::path()
+                    configuration::path().to_str().unwrap()
                 );
                 std::process::exit(1);
             }
-            None => None,
+            Some(subcommand::init::Error::CouldNotCreateFile) => {
+                eprintln!(
+                    "fatal: could not create the configuration file"
+                );
+                std::process::exit(1);
+            }
+            Some(subcommand::init::Error::CouldNotCreateConfigurationDirectory) => {
+                eprintln!(
+                    "fatal: could not create the configuration directory"
+                );
+                std::process::exit(1);
+            }
+            None => {
+                println!("success: created configuration file");
+                None
+            }
         },
         _ => None,
     };
-
-    //     match exit_code {
-    //         Some(error::Error::MissingConfigurationFile) => println!(
-    //             "fatal: no configuration file found: {}",
-    //             configuration::path()
-    //         ),
-    //         None => (),
-    //     }
 }
