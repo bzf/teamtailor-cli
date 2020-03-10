@@ -15,44 +15,48 @@ fn main() {
         .get_matches();
 
     match matches.subcommand() {
-        ("init", _) => match subcommand::init::call() {
-            Ok(configuration) => {
-                println!(
-                    "success: created configuration file ({})",
-                    configuration.filepath()
-                );
-            }
-            Err(subcommand::init::Error::ConfigurationError(error)) => match error {
-                configuration::Error::ConfigurationAlreadyExists => {
-                    eprintln!(
-                        "fatal: configuration file already exists: {}",
-                        configuration::path().to_str().unwrap()
-                    );
-                    std::process::exit(1);
-                }
-                configuration::Error::CouldNotSerializeConfiguration(serde_error) => {
-                    eprintln!(
-                        "fatal: could not create the configuration file ({})",
-                        serde_error
-                    );
-                    std::process::exit(1);
-                }
-                configuration::Error::CouldNotCreateFile(io_error) => {
-                    eprintln!(
-                        "fatal: could not create the configuration file ({})",
-                        io_error
-                    );
-                    std::process::exit(1);
-                }
-                configuration::Error::CouldNotCreateConfigurationDirectory(io_error) => {
-                    eprintln!(
-                        "fatal: could not create the configuration directory ({})",
-                        io_error
-                    );
-                    std::process::exit(1);
-                }
-            },
-        },
+        ("init", _) => run_init_command(),
         _ => std::process::exit(1),
+    }
+}
+
+fn run_init_command() -> () {
+    match subcommand::init::call() {
+        Ok(configuration) => {
+            println!(
+                "success: created configuration file ({})",
+                configuration.filepath()
+            );
+        }
+        Err(subcommand::init::Error::ConfigurationError(error)) => match error {
+            configuration::Error::ConfigurationAlreadyExists => {
+                eprintln!(
+                    "fatal: configuration file already exists: {}",
+                    configuration::path().to_str().unwrap()
+                );
+                std::process::exit(1);
+            }
+            configuration::Error::CouldNotSerializeConfiguration(serde_error) => {
+                eprintln!(
+                    "fatal: could not create the configuration file ({})",
+                    serde_error
+                );
+                std::process::exit(1);
+            }
+            configuration::Error::CouldNotCreateFile(io_error) => {
+                eprintln!(
+                    "fatal: could not create the configuration file ({})",
+                    io_error
+                );
+                std::process::exit(1);
+            }
+            configuration::Error::CouldNotCreateConfigurationDirectory(io_error) => {
+                eprintln!(
+                    "fatal: could not create the configuration directory ({})",
+                    io_error
+                );
+                std::process::exit(1);
+            }
+        },
     }
 }
