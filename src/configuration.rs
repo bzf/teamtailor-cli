@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub fn directory() -> std::path::PathBuf {
     let name = std::path::Path::new("teamtailor/");

@@ -28,15 +28,13 @@ pub fn call() -> Option<Error> {
         Ok(mut file) => {
             let default_configuration = configuration::default();
             match serde_yaml::to_string(&default_configuration) {
-                Ok(yml) => {
-                    match file.write_all(yml.as_bytes()) {
-                        Ok(_) => None,
-                        Err(_) => Some(Error::CouldNotCreateFile),
-                    }
+                Ok(yml) => match file.write_all(yml.as_bytes()) {
+                    Ok(_) => None,
+                    Err(_) => Some(Error::CouldNotCreateFile),
                 },
-                _ => Some(Error::CouldNotCreateFile)
+                _ => Some(Error::CouldNotCreateFile),
             }
-        },
+        }
         Err(_) => Some(Error::CouldNotCreateFile),
     }
 }

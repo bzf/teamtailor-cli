@@ -25,15 +25,11 @@ fn main() {
                 std::process::exit(1);
             }
             Some(subcommand::init::Error::CouldNotCreateFile) => {
-                eprintln!(
-                    "fatal: could not create the configuration file"
-                );
+                eprintln!("fatal: could not create the configuration file");
                 std::process::exit(1);
             }
             Some(subcommand::init::Error::CouldNotCreateConfigurationDirectory) => {
-                eprintln!(
-                    "fatal: could not create the configuration directory"
-                );
+                eprintln!("fatal: could not create the configuration directory");
                 std::process::exit(1);
             }
             None => {
