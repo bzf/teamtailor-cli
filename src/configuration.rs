@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::io::Write;
+use std::io::{Read, Write};
 
 pub fn directory() -> std::path::PathBuf {
     let name = std::path::Path::new("teamtailor/");
@@ -23,6 +23,13 @@ pub enum CreateError {
     ConfigurationAlreadyExists,
     CouldNotCreateFile(std::io::Error),
     CouldNotSerializeConfiguration(serde_yaml::Error),
+}
+
+pub enum LoadError {
+    MissingConfigrationFile,
+    FailedToOpenConfigrationFile,
+    FailedToDeserializeConfiguration(serde_yaml::Error),
+    FailedToReadConfigurationFile,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -61,6 +68,32 @@ impl Configuration {
                 Err(e) => Err(CreateError::CouldNotSerializeConfiguration(e)),
             },
             Err(e) => Err(CreateError::CouldNotCreateFile(e)),
+        }
+    }
+
+    pub fn load_configuration() -> Result<Configuration, LoadError> {
+        let configuration_path = path();
+
+        if !configuration_path.exists() {
+            return Err(LoadError::MissingConfigrationFile);
+        }
+
+        let mut data = vec![];
+
+        match std::fs::File::open(&configuration_path).map(|mut x| x.read_to_end(&mut data)) {
+            Ok(_) => (),
+            Err(_) => {
+                return Err(LoadError::FailedToOpenConfigrationFile);
+            }
+        }
+
+        let yml_data = String::from_utf8(data);
+
+        match yml_data.map(|x| serde_yaml::from_str(&x)) {
+            Ok(configuration) => {
+                configuration.or_else(|err| Err(LoadError::FailedToDeserializeConfiguration(err)))
+            }
+            Err(_) => Err(LoadError::FailedToReadConfigurationFile),
         }
     }
 }
