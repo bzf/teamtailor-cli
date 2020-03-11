@@ -99,8 +99,12 @@ fn run_clone_command() -> () {
                         let finish_message = format!("[{}] done", repo.name());
                         pb.finish_with_message(&finish_message);
                     }
-                    Err(repository::CloneError::FailedToClone(_)) => {
-                        let finish_message = format!("[{}] failed to clone", repo.name());
+                    Err(repository::CloneError::FailedToClone(_repo, git_error)) => {
+                        let finish_message = format!(
+                            "[{}] failed to clone ({})",
+                            repo.name(),
+                            git_error.message()
+                        );
                         pb.finish_with_message(&finish_message);
                     }
                     Err(repository::CloneError::AlreadyCloned(_)) => {

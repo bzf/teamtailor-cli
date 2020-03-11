@@ -2,36 +2,47 @@ extern crate git2;
 
 use super::configuration;
 
+use git2::{Cred, RemoteCallbacks};
+
 #[derive(Clone)]
 pub struct RemoteRepository {
-    url: String,
+    name: String,
 }
 
 pub enum CloneError {
     AlreadyCloned(RemoteRepository),
-    FailedToClone(RemoteRepository),
+    FailedToClone(RemoteRepository, git2::Error),
+}
+
+fn git_remote_callback(
+    _user: &str,
+    user_from_url: Option<&str>,
+    _cred: git2::CredentialType,
+) -> Result<git2::Cred, git2::Error> {
+    let user = user_from_url.unwrap_or("git");
+    Cred::ssh_key_from_agent(user)
 }
 
 impl RemoteRepository {
     pub fn all() -> Vec<RemoteRepository> {
         vec![
-            RemoteRepository::new("https://github.com/Teamtailor/insights"),
-            RemoteRepository::new("https://github.com/Teamtailor/teamtailor"),
-            RemoteRepository::new("https://github.com/Teamtailor/always-on"),
-            RemoteRepository::new("https://github.com/Teamtailor/ttmobile"),
-            RemoteRepository::new("https://github.com/Teamtailor/adapters"),
-            RemoteRepository::new("https://github.com/Teamtailor/marketingsite"),
-            RemoteRepository::new("https://github.com/Teamtailor/tt-ml"),
-            RemoteRepository::new("https://github.com/Teamtailor/tt-partner-docs"),
-            RemoteRepository::new("https://github.com/Teamtailor/docs"),
-            RemoteRepository::new("https://github.com/Teamtailor/sourcing"),
-            RemoteRepository::new("https://github.com/Teamtailor/tt-yearly-review"),
-            RemoteRepository::new("https://github.com/Teamtailor/screenshots"),
+            RemoteRepository::new("Teamtailor/insights"),
+            RemoteRepository::new("Teamtailor/teamtailor"),
+            RemoteRepository::new("Teamtailor/always-on"),
+            RemoteRepository::new("Teamtailor/ttmobile"),
+            RemoteRepository::new("Teamtailor/adapters"),
+            RemoteRepository::new("Teamtailor/marketingsite"),
+            RemoteRepository::new("Teamtailor/tt-ml"),
+            RemoteRepository::new("Teamtailor/tt-partner-docs"),
+            RemoteRepository::new("Teamtailor/docs"),
+            RemoteRepository::new("Teamtailor/sourcing"),
+            RemoteRepository::new("Teamtailor/tt-yearly-review"),
+            RemoteRepository::new("Teamtailor/screenshots"),
         ]
     }
 
     pub fn name(&self) -> &str {
-        self.url.split('/').last().unwrap_or("")
+        &self.name
     }
 
     pub fn clone_repostiory(
@@ -44,15 +55,33 @@ impl RemoteRepository {
             return Err(CloneError::AlreadyCloned(self.clone()));
         }
 
-        match git2::Repository::clone(&self.url, directory) {
-            Ok(repo) => Ok(LocalRepository::new(&self.url, repo)),
-            Err(_) => Err(CloneError::FailedToClone(self.clone())),
+        let mut callbacks = RemoteCallbacks::new();
+        callbacks.credentials(&git_remote_callback);
+
+        // Prepare fetch options.
+        let mut fetch_options = git2::FetchOptions::new();
+        fetch_options.remote_callbacks(callbacks);
+
+        // Prepare builder.
+        let mut builder = git2::build::RepoBuilder::new();
+        builder.fetch_options(fetch_options);
+
+        // Clone the project.
+        let result = builder.clone(&self.url(), &directory);
+
+        match result {
+            Ok(repo) => Ok(LocalRepository::new(&self.name, repo)),
+            Err(e) => Err(CloneError::FailedToClone(self.clone(), e)),
         }
     }
 
-    fn new(url: &str) -> RemoteRepository {
+    pub fn url(&self) -> String {
+        format!("git@github.com:{}.git", &self.name)
+    }
+
+    fn new(name: &str) -> RemoteRepository {
         RemoteRepository {
-            url: String::from(url),
+            name: String::from(name),
         }
     }
 
@@ -60,7 +89,9 @@ impl RemoteRepository {
         &self,
         configuration: &configuration::Configuration,
     ) -> std::path::PathBuf {
-        std::path::Path::new(&configuration.projects_directory()).join(self.name())
+        let directory_name = self.name().split('/').last().unwrap();
+
+        std::path::Path::new(&configuration.projects_directory()).join(directory_name)
     }
 }
 
@@ -79,12 +110,14 @@ impl LocalRepository {
 }
 
 mod tests {
+    use super::*;
+
     #[test]
     fn test_repository_name() {
-        let repository = RemoteRepository::new("https//github.com/Teamtailor/favicons");
-        assert_eq!(repository.name(), "favicons");
+        let repository = RemoteRepository::new("Teamtailor/favicons");
+        assert_eq!(repository.name(), "Teamtailor/favicons");
 
-        let repository = RemoteRepository::new("https//github.com/rails/rails");
-        assert_eq!(repository.name(), "rails");
+        let repository = RemoteRepository::new("rails/rails");
+        assert_eq!(repository.name(), "rails/rails");
     }
 }
