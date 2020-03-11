@@ -70,7 +70,7 @@ impl RemoteRepository {
         let result = builder.clone(&self.url(), &directory);
 
         match result {
-            Ok(repo) => Ok(LocalRepository::new(&self.name, repo)),
+            Ok(repo) => Ok(LocalRepository::new(repo, directory)),
             Err(e) => Err(CloneError::FailedToClone(self.clone(), e)),
         }
     }
@@ -96,15 +96,44 @@ impl RemoteRepository {
 }
 
 pub struct LocalRepository {
-    _url: String,
     _repository: git2::Repository,
+    path: std::path::PathBuf,
+}
+
+pub enum LocalRepositoryError {
+    NoRepositoryInDirectory(git2::Error),
 }
 
 impl LocalRepository {
-    fn new(url: &str, repository: git2::Repository) -> LocalRepository {
+    pub fn all(configuration: &configuration::Configuration) -> Vec<LocalRepository> {
+        match configuration.projects_directory().read_dir() {
+            Ok(children) => children
+                .filter_map(Result::ok)
+                .map(|dir| LocalRepository::new_from_path(&dir.path()))
+                .filter_map(Result::ok)
+                .collect(),
+            Err(_) => vec![],
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self.path.file_name() {
+            Some(file_name) => file_name.to_str().unwrap(),
+            None => "",
+        }
+    }
+
+    fn new_from_path(path: &std::path::PathBuf) -> Result<LocalRepository, LocalRepositoryError> {
+        match git2::Repository::open(&path) {
+            Ok(repo) => Ok(LocalRepository::new(repo, path.to_path_buf())),
+            Err(e) => Err(LocalRepositoryError::NoRepositoryInDirectory(e)),
+        }
+    }
+
+    fn new(repository: git2::Repository, path: std::path::PathBuf) -> LocalRepository {
         LocalRepository {
-            _url: String::from(url),
             _repository: repository,
+            path,
         }
     }
 }
