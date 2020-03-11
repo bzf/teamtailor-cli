@@ -25,7 +25,7 @@ fn main() {
     }
 }
 
-fn run_init_command() -> () {
+fn run_init_command() {
     match subcommand::init::call() {
         Ok(configuration) => {
             println!(
@@ -66,7 +66,7 @@ fn run_init_command() -> () {
     }
 }
 
-fn run_clone_command() -> () {
+fn run_clone_command() {
     let configuration = configuration::Configuration::load_configuration();
 
     match configuration {
