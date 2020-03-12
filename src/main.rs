@@ -4,23 +4,27 @@ use clap::App;
 use indicatif::{ProgressBar, ProgressStyle};
 
 mod configuration;
+mod doctor;
 mod repository;
 mod subcommand;
 
 fn main() {
     let init = App::new("init").about("Initialize a new configuration file");
     let clone = App::new("clone").about("Clone repositories to disk");
+    let doctor = App::new("doctor").about("Checks that the required tooling is availabile");
 
     let matches = App::new("teamtailor-cli")
         .version("v0.1-beta")
         .about("Helps out with your development environment")
         .subcommand(init)
         .subcommand(clone)
+        .subcommand(doctor)
         .get_matches();
 
     match matches.subcommand() {
         ("init", _) => run_init_command(),
         ("clone", _) => run_clone_command(),
+        ("doctor", _) => run_doctor_command(),
         _ => std::process::exit(1),
     }
 }
@@ -121,4 +125,22 @@ fn run_clone_command() -> () {
             std::process::exit(1);
         }
     }
+}
+
+fn run_doctor_command() {
+    for executable in doctor::check_executables() {
+        print!("checking for {}... ", executable.name());
+
+        match executable.path() {
+            Some(path) => {
+                println!("found! {}", path);
+            }
+            None => {
+                println!("missing");
+                std::process::exit(1);
+            }
+        }
+    }
+
+    std::process::exit(0);
 }
