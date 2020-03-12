@@ -10,17 +10,20 @@ mod subcommand;
 fn main() {
     let init = App::new("init").about("Initialize a new configuration file");
     let clone = App::new("clone").about("Clone repositories to disk");
+    let update = App::new("update").about("Update the cloned repositories to the latest commit");
 
     let matches = App::new("teamtailor-cli")
         .version("v0.1-beta")
         .about("Helps out with your development environment")
         .subcommand(init)
         .subcommand(clone)
+        .subcommand(update)
         .get_matches();
 
     match matches.subcommand() {
         ("init", _) => run_init_command(),
         ("clone", _) => run_clone_command(),
+        ("update", _) => run_update_command(),
         _ => std::process::exit(1),
     }
 }
@@ -113,6 +116,65 @@ fn run_clone_command() {
                     }
                 }
             }
+
+            std::process::exit(0);
+        }
+        Err(_) => {
+            eprintln!("fatal: failed to load the configuration file");
+            std::process::exit(1);
+        }
+    }
+}
+
+fn run_update_command() {
+    match configuration::Configuration::load_configuration() {
+        Ok(configuration) => {
+            let local_repositories = repository::LocalRepository::all(&configuration);
+
+            println!("--> Found {} local repositories", local_repositories.len());
+
+            for repo in local_repositories {
+                println!("{}", repo.name());
+                match repo.fetch_origin() {
+                    Ok(_) => std::process::exit(0),
+                    Err(e) => {
+                        eprintln!("{}", e.message());
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            // for repo in local_repositories {
+            //     let pb = ProgressBar::new_spinner();
+            //     pb.enable_steady_tick(120);
+            //     pb.set_style(
+            //         ProgressStyle::default_spinner()
+            //             .tick_strings(&[
+            //                 "▹▹▹▹▹",
+            //                 "▸▹▹▹▹",
+            //                 "▹▸▹▹▹",
+            //                 "▹▹▸▹▹",
+            //                 "▹▹▹▸▹",
+            //                 "▹▹▹▹▸",
+            //                 "▪▪▪▪▪",
+            //             ])
+            //             .template("{spinner:.blue} {msg}"),
+            //     );
+            //     let message = format!("Cloning repository '{}'", repo.name());
+            //     pb.set_message(&message);
+
+            //     // println!("  --> {}, clean? {}", repo.name(), repo.is_workdir_clean());
+            //     match repo.update_origin_master() {
+            //         Ok(_) => {
+            //             let finish_message = format!("[{}] done", repo.name());
+            //             pb.finish_with_message(&finish_message);
+            //         }
+            //         Err(e) => {
+            //             let finish_message = format!("[{}] failed ({})", repo.name(), e.message());
+            //             pb.finish_with_message(&finish_message);
+            //         }
+            //     }
+            // }
 
             std::process::exit(0);
         }
