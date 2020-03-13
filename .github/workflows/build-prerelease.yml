@@ -47,7 +47,7 @@ jobs:
           release_name: Teamtailor ${{github.sha}}
           tag_name: release
           draft: false
-          prerelease: false
+          prerelease: true
       - name: Upload Linux asset
         id: upload-linux-asset
         uses: actions/upload-release-asset@v1
