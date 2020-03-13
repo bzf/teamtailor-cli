@@ -1,0 +1,70 @@
+name: Release
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  build-per-platform:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo build --release
+      - run: mkdir dist/
+      - run: cp target/release/teamtailor dist/
+      - uses: actions/upload-artifact@v1
+        with:
+          name: teamtailor-${{matrix.os}}-${{github.sha}}
+          path: dist
+
+  create-release:
+    needs: build-per-platform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: teamtailor-ubuntu-latest-${{github.sha}}
+          path: dist/teamtailor-linux/
+      - name: Create Linux archive
+        run: |
+          zip --junk-paths teamtailor-linux dist/teamtailor-linux/teamtailor
+      - uses: actions/download-artifact@v1
+        with:
+          name: teamtailor-macos-latest-${{github.sha}}
+          path: dist/teamtailor-macos/
+      - name: Create macOS archive
+        run: |
+          zip --junk-paths teamtailor-macos dist/teamtailor-macos/teamtailor
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Teamtailor ${{github.sha}}
+          tag_name: release
+          draft: false
+          prerelease: false
+      - name: Upload Linux asset
+        id: upload-linux-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./teamtailor-linux.zip
+          asset_name: teamtailor-linux.zip
+          asset_content_type: application/zip
+      - name: Upload macOS asset
+        id: upload-macos-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./teamtailor-macos.zip
+          asset_name: teamtailor-macos.zip
+          asset_content_type: application/zip
