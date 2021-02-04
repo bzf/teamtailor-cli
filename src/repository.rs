@@ -38,6 +38,8 @@ impl RemoteRepository {
             RemoteRepository::new("Teamtailor/sourcing"),
             RemoteRepository::new("Teamtailor/tt-yearly-review"),
             RemoteRepository::new("Teamtailor/screenshots"),
+            RemoteRepository::new("Teamtailor/blackbox"),
+            RemoteRepository::new("Teamtailor/teamtailor-rb"),
         ]
     }
 
