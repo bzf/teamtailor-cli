@@ -1,7 +1,7 @@
 teamtailor-cli
 ==============
 
-A simple tool for helping manging the development environment while working on
+A simple tool for helping managing the development environment while working on
 Teamtailor.
 
 
