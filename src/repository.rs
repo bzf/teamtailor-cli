@@ -40,6 +40,7 @@ impl RemoteRepository {
             RemoteRepository::new("Teamtailor/screenshots"),
             RemoteRepository::new("Teamtailor/blackbox"),
             RemoteRepository::new("Teamtailor/teamtailor-rb"),
+            RemoteRepository::new("Teamtailor/teamtailor-cli"),
         ]
     }
 
